@@ -1,3 +1,14 @@
+## [1.5.0-dev.1](https://github.com/RookieEnough/De-Vanced/compare/v1.4.4...v1.5.0-dev.1) (2026-09-28)
+
+### 🐛 Bug Fixes
+
+* add missing junit to version catalog ([82a7d5c](https://github.com/RookieEnough/De-Vanced/commit/82a7d5ce10c7304a2f66c4c5c57bff279cd38457))
+* **facebook:** match static flag instead of exact access flags in KeepAskedStartTab fingerprint ([c22c02d](https://github.com/RookieEnough/De-Vanced/commit/c22c02d1a0a538736e434b4a32f3435864842f22))
+
+### ✨ New Features
+
+* **Facebook:** add full 580 patch set ([7c90029](https://github.com/RookieEnough/De-Vanced/commit/7c9002965f3c30a1d11bd564169e944af9e6edd1))
+
 ## [1.4.4](https://github.com/RookieEnough/De-Vanced/compare/v1.4.3...v1.4.4) (2026-09-20)
 
 ### 🐛 Bug Fixes
