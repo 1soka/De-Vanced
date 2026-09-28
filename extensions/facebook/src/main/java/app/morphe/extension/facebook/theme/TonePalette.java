@@ -3,6 +3,7 @@
 * [https://github.com/RookieEnough/De-Vanced](https://github.com/RookieEnough/De-Vanced)
 *
 * Palette maths adapted from Hushfacebook (GPL-3.0).
+* [https://github.com/SysAdminDoc/HushFacebook/blob/aa6cb7c4d904b3fbf1da07809231e97b151705fb/extensions/facebook/src/main/java/app/morphe/extension/facebook/theme/TonePalette.java](https://github.com/SysAdminDoc/HushFacebook/blob/aa6cb7c4d904b3fbf1da07809231e97b151705fb/extensions/facebook/src/main/java/app/morphe/extension/facebook/theme/TonePalette.java)
 */
 
 package app.morphe.extension.facebook.theme;
