@@ -1,13 +1,14 @@
 /*
  * Copyright 2026 De-Vanced
+ * Copyright 2026 Hushfacebook contributors
  * [https://github.com/RookieEnough/De-Vanced](https://github.com/RookieEnough/De-Vanced)
  *
  * Startup anchors adapted from Hushfacebook (GPL-3.0).
+ * [https://github.com/SysAdminDoc/HushFacebook](https://github.com/SysAdminDoc/HushFacebook)
  */
 
 package app.morphe.patches.facebook.navigation.marketplace
 
-import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.Method
 import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
@@ -57,32 +58,6 @@ internal fun Instruction.callRegisters(): List<Int> = when (this) {
     else -> emptyList()
 }
 
-private fun Method.calls(definingClass: String, name: String, parameters: List<String>, returnType: String) =
-    implementation?.instructions?.any { instruction ->
-        val call = instruction.call ?: return@any false
-        call.definingClass == definingClass && call.name == name && call.returnType == returnType &&
-            call.parameters() == parameters
-    } == true
-
-private fun readsOwnLong(method: Method) = method.implementation?.instructions?.any {
-    it.opcode == Opcode.IGET_WIDE && ((it as ReferenceInstruction).reference as FieldReference).let { field ->
-        field.definingClass == method.definingClass && field.type == "J"
-    }
-} == true
-
-internal fun holdsString(method: Method, string: String): Boolean =
-    method.implementation?.instructions?.any {
-        ((it as? ReferenceInstruction)?.reference as? StringReference)?.string == string
-    } == true
-
-internal fun picksStartTab(method: Method): Boolean =
-    !method.definingClass.startsWith(EXTENSION_PACKAGE) &&
-        method.returnType == "J" &&
-        method.parameterTypes.any { it.toString() == INTENT } &&
-        holdsString(method, TARGET_TAB_ID) &&
-        method.calls(INTENT, "hasExtra", listOf("Ljava/lang/String;"), "Z") &&
-        method.calls(INTENT, "getLongExtra", listOf("Ljava/lang/String;", "J"), "J")
-
 private fun readsMobileConfigBoolean(instruction: Instruction): Boolean {
     if (instruction.opcode != Opcode.INVOKE_STATIC && instruction.opcode != Opcode.INVOKE_STATIC_RANGE) return false
     val call = instruction.call ?: return false
@@ -90,41 +65,8 @@ private fun readsMobileConfigBoolean(instruction: Instruction): Boolean {
         call.parameters() == listOf("Ljava/lang/Object;", "J")
 }
 
-internal fun startPositionGate(method: Method): Int? {
-    if (method.returnType != "V" || method.parameterTypes.map { it.toString() } != listOf("Z")) return null
-    if (!holdsString(method, START_POSITION)) return null
-    val code = method.implementation?.instructions?.toList() ?: return null
-    val call = code.indexOfFirst(::readsMobileConfigBoolean)
-    if (call < 0) return null
-    val result = code.getOrNull(call + 1)
-    if (result?.opcode != Opcode.MOVE_RESULT) return null
-    val answer = (result as OneRegisterInstruction).registerA
-    val branch = code.getOrNull(call + 2)
-    if (branch?.opcode != Opcode.IF_EQZ || (branch as OneRegisterInstruction).registerA != answer) return null
-    val read = code.getOrNull(call + 3)
-    if (read?.opcode != Opcode.IGET_WIDE) return null
-    val field = (read as ReferenceInstruction).reference as FieldReference
-    if (field.definingClass != method.definingClass || field.type != "J") return null
-    val startTab = (read as TwoRegisterInstruction).registerA
-    val lookup = code.subList(call + 4, minOf(code.size, call + 4 + LOOKUP_WINDOW)).firstOrNull {
-        val target = it.call
-        target != null && target.parameters() == listOf("J") && target.returnType == "Ljava/lang/Integer;"
-    } ?: return null
-    val receiver = if (lookup.opcode == Opcode.INVOKE_STATIC || lookup.opcode == Opcode.INVOKE_STATIC_RANGE) 0 else 1
-    if (lookup.callRegisters().getOrNull(receiver) != startTab) return null
-    return call + 1
-}
-
-internal fun keepsAskedStartTab(method: Method): Boolean =
-    AccessFlags.STATIC.isSet(method.accessFlags) && method.returnType == "Z" &&
-        method.parameterTypes.map { it.toString() } == listOf(MAIN_TAB_ACTIVITY, method.definingClass) &&
-        holdsString(method, TARGET_TAB_ID) &&
-        method.calls(INTENT, "getLongExtra", listOf("Ljava/lang/String;", "J"), "J") &&
-        readsOwnLong(method)
-
-internal fun sanitizedIntentHandOver(method: Method): Int? {
-    if (!holdsString(method, SANITIZE_INTENT)) return null
-    val code = method.implementation?.instructions?.toList() ?: return null
+internal fun Method.findSanitizedIntentHandOverIndex(): Int? {
+    val code = implementation?.instructions?.toList() ?: return null
     val kept = code.indexOfFirst { ((it as? ReferenceInstruction)?.reference as? StringReference)?.string == KEPT_EXTRA }
     if (kept < 0) return null
     val set = (kept + 1 until minOf(code.size, kept + 1 + HAND_OVER_WINDOW)).firstOrNull { index ->
@@ -141,4 +83,27 @@ internal fun sanitizedIntentHandOver(method: Method): Int? {
             code[index].callRegisters().firstOrNull() == copy
     }
     return if (built) set else null
+}
+
+internal fun Method.findStartPositionGateIndex(): Int? {
+    val code = implementation?.instructions?.toList() ?: return null
+    val call = code.indexOfFirst(::readsMobileConfigBoolean)
+    if (call < 0) return null
+    val result = code.getOrNull(call + 1)
+    if (result?.opcode != Opcode.MOVE_RESULT) return null
+    val answer = (result as OneRegisterInstruction).registerA
+    val branch = code.getOrNull(call + 2)
+    if (branch?.opcode != Opcode.IF_EQZ || (branch as OneRegisterInstruction).registerA != answer) return null
+    val read = code.getOrNull(call + 3)
+    if (read?.opcode != Opcode.IGET_WIDE) return null
+    val field = (read as ReferenceInstruction).reference as FieldReference
+    if (field.definingClass != definingClass || field.type != "J") return null
+    val startTab = (read as TwoRegisterInstruction).registerA
+    val lookup = code.subList(call + 4, minOf(code.size, call + 4 + LOOKUP_WINDOW)).firstOrNull {
+        val target = it.call
+        target != null && target.parameters() == listOf("J") && target.returnType == "Ljava/lang/Integer;"
+    } ?: return null
+    val receiver = if (lookup.opcode == Opcode.INVOKE_STATIC || lookup.opcode == Opcode.INVOKE_STATIC_RANGE) 0 else 1
+    if (lookup.callRegisters().getOrNull(receiver) != startTab) return null
+    return call + 1
 }

@@ -1,8 +1,10 @@
 /*
 * Copyright 2026 De-Vanced
+* Copyright 2026 Hushfacebook contributors
 * [https://github.com/RookieEnough/De-Vanced](https://github.com/RookieEnough/De-Vanced)
 *
 * Resource recolouring and surface rewrite adapted from Hushfacebook (GPL-3.0).
+* [https://github.com/SysAdminDoc/HushFacebook/blob/aa6cb7c4d904b3fbf1da07809231e97b151705fb/patches/src/main/kotlin/app/morphe/patches/facebook/layout/theme/MaterialYouThemePatch.kt](https://github.com/SysAdminDoc/HushFacebook/blob/aa6cb7c4d904b3fbf1da07809231e97b151705fb/patches/src/main/kotlin/app/morphe/patches/facebook/layout/theme/MaterialYouThemePatch.kt)
 */
 
 package app.morphe.patches.facebook.theme

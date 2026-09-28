@@ -1,8 +1,10 @@
 /*
  * Copyright 2026 De-Vanced
+ * Copyright 2026 Hushfacebook contributors
  * [https://github.com/RookieEnough/De-Vanced](https://github.com/RookieEnough/De-Vanced)
  *
  * Return-refresh hook adapted from Hushfacebook (GPL-3.0).
+ * [https://github.com/SysAdminDoc/HushFacebook/blob/aa6cb7c4d904b3fbf1da07809231e97b151705fb/patches/src/main/kotlin/app/morphe/patches/facebook/feed/refresh/BlockReturnRefreshPatch.kt](https://github.com/SysAdminDoc/HushFacebook/blob/aa6cb7c4d904b3fbf1da07809231e97b151705fb/patches/src/main/kotlin/app/morphe/patches/facebook/feed/refresh/BlockReturnRefreshPatch.kt)
  */
 
 package app.morphe.patches.facebook.feed.refresh
@@ -16,14 +18,9 @@ import app.morphe.patches.facebook.shared.Constants
 import app.morphe.patches.facebook.shared.FacebookTargets
 import app.morphe.patches.shared.misc.extension.sharedExtensionPatch
 import app.morphe.util.getFreeRegisterProvider
-import com.android.tools.smali.dexlib2.iface.Method
-import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
-import com.android.tools.smali.dexlib2.iface.reference.StringReference
 
 private val extensionPatch = sharedExtensionPatch("facebook", false)
 
-private const val CONTROLLER = "FeedRefreshTriggerController"
-private const val ON_REFRESH = "onRefresh"
 private const val RETURN_REFRESH =
     "Lapp/morphe/extension/facebook/feed/ReturnRefresh;"
 private const val SKIP = "$RETURN_REFRESH->shouldSkip()Z"
@@ -41,38 +38,13 @@ val blockReturnRefreshPatch = bytecodePatch(
             return@execute
         }
 
-        val callbacks = mutableListOf<Method>()
-        classDefForEach { classDef ->
-            if (classDef.type.startsWith("Lapp/morphe/extension/")) {
-                return@classDefForEach
-            }
-            callbacks += classDef.methods.filter(::isReturnRefreshCallback)
-        }
-        val callback = callbacks.singleOrNull() ?: error(
-            "Expected one FeedRefreshTriggerController resume callback " +
-                "holding $ON_REFRESH, found ${callbacks.size}",
-        )
-        mutableClassDefBy(callback.definingClass).methods.first {
-            it.name == callback.name && it.parameterTypes == callback.parameterTypes
-        }.skipBriefReturnRefresh()
+        val callback = ReturnRefreshCallbackFingerprint.method
+        callback.skipBriefReturnRefresh()
         println(
             "[DisableAutoRefresh] callback=${callback.definingClass}->${callback.name}",
         )
     }
 }
-
-private fun isReturnRefreshCallback(method: Method): Boolean =
-    method.returnType == "V" &&
-        method.parameterTypes.size == 1 &&
-        method.implementation != null &&
-        method.holdsString(CONTROLLER) &&
-        method.holdsString(ON_REFRESH)
-
-private fun Method.holdsString(string: String): Boolean =
-    implementation?.instructions?.any { instruction ->
-        ((instruction as? ReferenceInstruction)?.reference as? StringReference)
-            ?.string == string
-    } == true
 
 private fun MutableMethod.skipBriefReturnRefresh() {
     val register = getFreeRegisterProvider(0, 1)

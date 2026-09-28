@@ -1,8 +1,10 @@
 /*
  * Copyright 2026 De-Vanced
+ * Copyright 2026 Hushfacebook contributors
  * [https://github.com/RookieEnough/De-Vanced](https://github.com/RookieEnough/De-Vanced)
  *
  * Startup route adapted from Hushfacebook (GPL-3.0).
+ * [https://github.com/SysAdminDoc/HushFacebook](https://github.com/SysAdminDoc/HushFacebook)
  */
 
 package app.morphe.patches.facebook.navigation.marketplace
@@ -17,11 +19,9 @@ import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod
 import app.morphe.patches.facebook.shared.Constants
 import app.morphe.patches.facebook.shared.FacebookTargets
 import app.morphe.patches.shared.misc.extension.sharedExtensionPatch
-import app.morphe.util.findMutableMethodOf
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.builder.BuilderInstruction
 import com.android.tools.smali.dexlib2.iface.ClassDef
-import com.android.tools.smali.dexlib2.iface.Method
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.RegisterRangeInstruction
 
@@ -49,59 +49,29 @@ val openMarketplaceOnLaunchPatch = bytecodePatch(
     execute {
         if (packageMetadata.versionName != FacebookTargets.V580) return@execute
 
-        val pickers = mutableListOf<Method>()
-        classDefForEach { classDef ->
-            if (classDef.type.startsWith(EXTENSION_PACKAGE)) return@classDefForEach
-            pickers += classDef.methods.filter(::picksStartTab)
-        }
-        check(pickers.size == 1) {
-            "$PATCH: expected one start-tab picker, found ${pickers.size}"
-        }
+        val picker = StartTabPickerFingerprint.method
+        val handOverMethod = SanitizedIntentHandOverFingerprint.method
+        val gateMethod = StartPositionGateFingerprint.method
+        val keepMethod = KeepAskedStartTabFingerprint.method
 
-        val handOver = mutableListOf<Pair<Method, Int>>()
-        val gates = mutableListOf<Pair<Method, Int>>()
-        val keeps = mutableListOf<Method>()
-        classDefForEach { classDef ->
-            if (classDef.type.startsWith(EXTENSION_PACKAGE)) return@classDefForEach
-            handOver += classDef.methods.mapNotNull { method ->
-                sanitizedIntentHandOver(method)?.let { method to it }
-            }
-            gates += classDef.methods.mapNotNull { method ->
-                startPositionGate(method)?.let { method to it }
-            }
-            keeps += classDef.methods.filter(::keepsAskedStartTab)
-        }
-        check(handOver.size == 1) {
-            "$PATCH: expected one sanitized-intent hand-over, found ${handOver.size}"
-        }
-        check(gates.size == 1) {
-            "$PATCH: expected one tab-bar start gate, found ${gates.size}"
-        }
-        check(keeps.size == 1) {
-            "$PATCH: expected one main-screen keep check, found ${keeps.size}"
-        }
+        val handOverIndex = handOverMethod.findSanitizedIntentHandOverIndex()
+            ?: error("$PATCH: sanitized-intent hand-over pattern not found")
+        val gateIndex = gateMethod.findStartPositionGateIndex()
+            ?: error("$PATCH: tab-bar start gate pattern not found")
 
-        val handMethod = mutable(handOver.single().first)
         println(
-            "[OpenMarketplaceOnLaunch] handOver=${handOver.single().first.definingClass}->${handOver.single().first.name} " +
-                "gate=${gates.single().first.definingClass}->${gates.single().first.name} " +
-                "keep=${keeps.single().definingClass}->${keeps.single().name}"
+            "[OpenMarketplaceOnLaunch] handOver=${handOverMethod.definingClass}->${handOverMethod.name} " +
+                "gate=${gateMethod.definingClass}->${gateMethod.name} " +
+                "keep=${keepMethod.definingClass}->${keepMethod.name}"
         )
-        handMethod.handSanitizedIntentToExtension(handOver.single().second)
-        val gate = gates.single()
-        mutable(gate.first).askExtensionAfterGate(gate.second)
-        mutable(keeps.single()).askExtensionAtReturns()
+        handOverMethod.handSanitizedIntentToExtension(handOverIndex)
+        gateMethod.askExtensionAfterGate(gateIndex)
+        keepMethod.askExtensionAtReturns()
         declaredInHierarchy(MAIN_TAB_ACTIVITY, "onCreate", "Landroid/os/Bundle;")
             .addInstruction(0, "invoke-static/range {p0 .. p1}, $MARKETPLACE_ON_CREATE")
-        println("[OpenMarketplaceOnLaunch] picker=${pickers.single().definingClass}->${pickers.single().name}")
+        println("[OpenMarketplaceOnLaunch] picker=${picker.definingClass}->${picker.name}")
     }
 }
-
-private fun BytecodePatchContext.mutable(method: Method): MutableMethod =
-    mutableClassDefBy(method.definingClass).methods.single {
-        it.name == method.name && it.returnType == method.returnType &&
-            it.parameterTypes.map(CharSequence::toString) == method.parameterTypes.map(CharSequence::toString)
-    }
 
 private fun BytecodePatchContext.declaredInHierarchy(
     type: String,
