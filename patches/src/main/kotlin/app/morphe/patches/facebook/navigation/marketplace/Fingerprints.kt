@@ -74,11 +74,11 @@ object StartPositionGateFingerprint : Fingerprint(
 )
 
 object KeepAskedStartTabFingerprint : Fingerprint(
-    accessFlags = listOf(AccessFlags.STATIC),
     returnType = "Z",
     strings = listOf(TARGET_TAB_ID),
     custom = { method, _ ->
         !method.definingClass.startsWith(EXTENSION_PACKAGE) &&
+            AccessFlags.STATIC.isSet(method.accessFlags) &&
             method.parameterTypes.map { it.toString() } ==
                 listOf(MAIN_TAB_ACTIVITY, method.definingClass) &&
             method.calls(INTENT, "getLongExtra", listOf("Ljava/lang/String;", "J"), "J") &&
