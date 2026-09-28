@@ -1,5 +1,6 @@
 /*
  * Copyright 2026 De-Vanced
+ * Copyright 2026 Hushfacebook contributors
  * [https://github.com/RookieEnough/De-Vanced](https://github.com/RookieEnough/De-Vanced)
  *
  * Timing model adapted from Hushfacebook (GPL-3.0).
