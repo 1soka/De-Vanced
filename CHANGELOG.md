@@ -1,3 +1,9 @@
+## [1.5.0-dev.4](https://github.com/RookieEnough/De-Vanced/compare/v1.5.0-dev.3...v1.5.0-dev.4) (2026-09-29)
+
+### 🐛 Bug Fixes
+
+* **facebook:** normalize downloads to H.264/AAC-LC in single pass ([432f243](https://github.com/RookieEnough/De-Vanced/commit/432f243f07468e54cf1ca0d3d05c9e87828fbce7)), closes [#154](https://github.com/RookieEnough/De-Vanced/issues/154)
+
 ## [1.5.0-dev.3](https://github.com/RookieEnough/De-Vanced/compare/v1.5.0-dev.2...v1.5.0-dev.3) (2026-09-29)
 
 ### 🐛 Bug Fixes
