@@ -1,3 +1,9 @@
+## [1.5.0-dev.3](https://github.com/RookieEnough/De-Vanced/compare/v1.5.0-dev.2...v1.5.0-dev.3) (2026-09-29)
+
+### 🐛 Bug Fixes
+
+* **facebook:** prefer H.264 video and AAC audio in download variant selection ([4e8759e](https://github.com/RookieEnough/De-Vanced/commit/4e8759ef71d0bf3657c79ea22a93b2c89bf14977)), closes [#154](https://github.com/RookieEnough/De-Vanced/issues/154)
+
 ## [1.5.0-dev.2](https://github.com/RookieEnough/De-Vanced/compare/v1.5.0-dev.1...v1.5.0-dev.2) (2026-09-29)
 
 ### 🐛 Bug Fixes
