@@ -182,6 +182,16 @@ public final class MediaVariantSelector {
     }
 
     static int compareQuality(MediaVariant left, MediaVariant right) {
+        // Prefer universally shareable codecs so downloads can be
+        // sent to WhatsApp and other apps: H.264 for video, AAC for
+        // audio. Falls back to quality comparison when both variants
+        // use (or do not use) shareable codecs.
+        int codec = Integer.compare(
+                shareableCodecScore(left),
+                shareableCodecScore(right)
+        );
+        if (codec != 0) return codec;
+
         int qualityEdge = Integer.compare(
                 left.qualityLabelEdge(),
                 right.qualityLabelEdge()
@@ -198,6 +208,36 @@ public final class MediaVariantSelector {
             return left.hasAudio ? 1 : -1;
         }
         return left.url.compareTo(right.url);
+    }
+
+    /**
+     * Returns 1 when the variant uses a universally shareable codec
+     * (H.264 video or AAC audio), 0 otherwise.
+     */
+    private static int shareableCodecScore(MediaVariant variant) {
+        if (variant.kind == MediaVariant.Kind.DASH_VIDEO ||
+                variant.kind == MediaVariant.Kind.PROGRESSIVE_VIDEO) {
+            return isH264(variant) ? 1 : 0;
+        }
+        if (variant.kind == MediaVariant.Kind.DASH_AUDIO) {
+            return isAac(variant) ? 1 : 0;
+        }
+        return 0;
+    }
+
+    private static boolean isH264(MediaVariant variant) {
+        if ("video/avc".equalsIgnoreCase(variant.mimeType)) {
+            return true;
+        }
+        String codecs = variant.codecs.toLowerCase();
+        return codecs.startsWith("avc1") || codecs.contains("avc1.");
+    }
+
+    private static boolean isAac(MediaVariant variant) {
+        if ("audio/mp4a-latm".equalsIgnoreCase(variant.mimeType)) {
+            return true;
+        }
+        return variant.codecs.toLowerCase().startsWith("mp4a");
     }
 
     private static final class Group {
