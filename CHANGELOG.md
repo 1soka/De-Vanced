@@ -1,3 +1,9 @@
+## [1.5.0-dev.2](https://github.com/RookieEnough/De-Vanced/compare/v1.5.0-dev.1...v1.5.0-dev.2) (2026-09-29)
+
+### 🐛 Bug Fixes
+
+* **facebook:** prevent AMOLED theme recursion crash in Messenger DMs ([c667a13](https://github.com/RookieEnough/De-Vanced/commit/c667a134f22c95e3b52c047f35cff0e64012035b))
+
 ## [1.5.0-dev.1](https://github.com/RookieEnough/De-Vanced/compare/v1.4.4...v1.5.0-dev.1) (2026-09-28)
 
 ### 🐛 Bug Fixes
