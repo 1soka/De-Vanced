@@ -339,13 +339,15 @@ private fun Instruction.backgroundOverride(): String? {
 
 private fun Method.callsViewBackground(): Boolean =
     implementation?.instructions?.any {
-        it.backgroundOverride() != null
+        it.opcode != Opcode.INVOKE_SUPER &&
+            it.backgroundOverride() != null
     } == true
 
 private fun MutableMethod.rerouteViewBackgrounds(): Int {
     val sites = (implementation ?: return 0).instructions.withIndex()
         .filter { (_, instruction) ->
-            instruction.backgroundOverride() != null
+            instruction.opcode != Opcode.INVOKE_SUPER &&
+                instruction.backgroundOverride() != null
         }
 
     sites.asReversed().forEach { (index, instruction) ->
