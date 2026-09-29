@@ -3148,9 +3148,14 @@ public final class MediaDownloader {
                     normalizedFile,
                     downloadQuality.targetQualityEdge()
             );
+            java.io.File shareableFile =
+                    app.morphe.extension.facebook.media
+                            .MediaShareNormalizer.normalizeForShare(
+                            normalized.file
+                    );
             publishCachedMedia(
                     appContext,
-                    normalized.file,
+                    shareableFile,
                     fileName,
                     "video/mp4"
             );
