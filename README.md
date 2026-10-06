@@ -39,7 +39,7 @@
 
 ## How to use these patches
 
-1. Install Morphe Manager if you have not yet: https://morphe.software
+1. Install [Morphe Manager](https://morphe.software) if you have not yet.
 
 2. [Click here to add De-Vanced patches to Morphe Manager](https://morphe.software/add-source?github=RookieEnough/De-Vanced)
 
